@@ -7,25 +7,27 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022 # Явно указываем версию сервера
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1 # Настраивает переменные окружения Visual Studio
 
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
     - name: Configure CMake
       run: |
-        cmake -B build -G "Visual Studio 17 2022" -A x64 `
+        cmake -B build -S . `
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
           -DVCPKG_TARGET_TRIPLET=x64-windows `
           -DENABLE_EXAMPLES=ON `
           -DENABLE_APP=ON `
           -DCMAKE_BUILD_TYPE=Release `
-          -DCPACK_PACKAGE_NAME="MAX Antivirus" `
-          -DCPACK_PACKAGE_VENDOR="MAX Security"
+          -DCPACK_PACKAGE_NAME="MAX Antivirus"
 
     - name: Build MAX
       run: |
