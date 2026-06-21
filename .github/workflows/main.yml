@@ -1,22 +1,46 @@
 name: Build MAX Antivirus
-on: [push, workflow_dispatch]
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup vcpkg
-      run: vcpkg install openssl:x64-windows zlib:x64-windows bzip2:x64-windows json-c:x64-windows pcre2:x64-windows libxml2:x64-windows curl:x64-windows
-    - name: Configure
-      run: cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DENABLE_EXAMPLES=ON -DENABLE_APP=ON -DCMAKE_BUILD_TYPE=Release
-    - name: Build
-      run: cmake --build build --config Release --target MAX
-    - name: Upload
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -G "Visual Studio 17 2022" -A x64 `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x64-windows `
+          -DENABLE_EXAMPLES=ON `
+          -DENABLE_APP=ON `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DCPACK_PACKAGE_NAME="MAX Antivirus" `
+          -DCPACK_PACKAGE_VENDOR="MAX Security"
+
+    - name: Build MAX
+      run: |
+        cmake --build build --config Release --target MAX
+        cmake --build build --config Release --target MAX_Guard
+
+    - name: Create Installer (MSI)
+      working-directory: build
+      run: cpack -G WIX
+
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: MAX-Antivirus
+        name: MAX-Antivirus-Setup
         path: |
+          build/*.msi
           build/bin/Release/MAX.exe
           ui_mockup.html
-
