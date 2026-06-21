@@ -1,1 +1,22 @@
+name: Build MAX Antivirus
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup vcpkg
+      run: vcpkg install openssl:x64-windows zlib:x64-windows bzip2:x64-windows json-c:x64-windows pcre2:x64-windows libxml2:x64-windows curl:x64-windows
+    - name: Configure
+      run: cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DENABLE_EXAMPLES=ON -DENABLE_APP=ON -DCMAKE_BUILD_TYPE=Release
+    - name: Build
+      run: cmake --build build --config Release --target MAX
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: MAX-Antivirus
+        path: |
+          build/bin/Release/MAX.exe
+          ui_mockup.html
 
