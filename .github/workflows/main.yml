@@ -1,29 +1,16 @@
-name: Build MAX Antivirus
+name: Build MAX
 on: [push, workflow_dispatch]
-
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Install WebView2 SDK
+      - name: Build
         run: |
-          nuget install Microsoft.Web.WebView2 -Version 1.0.1264.42 -OutputDirectory build/sdk
-
-      - name: Build EXE
-        run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -S .
           cmake --build build --config Release --target MAX
-
-      - name: Upload Final EXE
+      - name: Get EXE
         uses: actions/upload-artifact@v4
         with:
-          name: MAX-Antivirus-Final-EXE
-          path: |
-            build/bin/Release/MAX.exe
-            build/sdk/Microsoft.Web.WebView2.1.0.1264.42/build/native/x64/WebView2Loader.dll
-            ui_mockup.html
+          name: MAX_Result
+          path: build/Release/MAX.exe
