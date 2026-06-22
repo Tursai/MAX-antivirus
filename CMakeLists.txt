@@ -1,19 +1,22 @@
 cmake_minimum_required(VERSION 3.16)
 project(MAX_Antivirus)
 
+# Отключаем лишние предупреждения
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-set(CMAKE_CXX_STANDARD 17)
 
-include(FetchContent)
-FetchContent_Declare(webview2 URL https://www.nuget.org/api/v2/package/Microsoft.Web.WebView2/1.0.1264.42)
-FetchContent_MakeAvailable(webview2)
-
+# Собираем основной файл программы
 add_executable(MAX WIN32 max_gui.cpp max.rc)
 
-target_link_libraries(MAX PRIVATE shlwapi)
-target_include_directories(MAX PRIVATE "${webview2_SOURCE_DIR}/build/native/include")
-target_link_libraries(MAX PRIVATE "${webview2_SOURCE_DIR}/build/native/x64/WebView2Loader.dll.lib")
-
+# Указываем, какие файлы должны попасть в установщик
 install(TARGETS MAX DESTINATION .)
-install(FILES ui_mockup.html mascot.png DESTINATION .)
-install(FILES "${webview2_SOURCE_DIR}/build/native/x64/WebView2Loader.dll" DESTINATION .)
+install(FILES ui_mockup.html DESTINATION .)
+
+# --- НАСТРОЙКА ИНСТАЛЛЯТОРА (MSI) ---
+set(CPACK_PACKAGE_NAME "MAX-Antivirus")
+set(CPACK_PACKAGE_VENDOR "MAX-Security")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_GENERATOR "WIX")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "MAX Antivirus")
+
+# Включаем модуль создания инсталлятора
+include(CPack)
