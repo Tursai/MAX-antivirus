@@ -25,4 +25,5 @@ jobs:
           name: MAX-Antivirus-Final-EXE
           path: |
             build/bin/Release/MAX.exe
+            build/sdk/Microsoft.Web.WebView2.1.0.1264.42/build/native/x64/WebView2Loader.dll
             ui_mockup.html
