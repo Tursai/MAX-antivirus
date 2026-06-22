@@ -7,14 +7,14 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-2022 # Явно указываем версию сервера
+    runs-on: windows-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Setup MSVC
-      uses: ilammy/msvc-dev-cmd@v1 # Настраивает переменные окружения Visual Studio
+      uses: ilammy/msvc-dev-cmd@v1
 
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -24,19 +24,10 @@ jobs:
         cmake -B build -S . `
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
           -DVCPKG_TARGET_TRIPLET=x64-windows `
-          -DENABLE_EXAMPLES=ON `
-          -DENABLE_APP=ON `
-          -DCMAKE_BUILD_TYPE=Release `
-          -DCPACK_PACKAGE_NAME="MAX Antivirus"
+          -DENABLE_EXAMPLES=OFF `
+          -DENABLE_APP=OFF `
+          -DCMAKE_BUILD_TYPE=Release
 
-     - name: Build MAX
-      run: |
-        cmake --build build --config Release --target MAX_TARGET
-        cmake --build build --config Release --target MAX_GUARD_TARGET
-
-    - name: Create Installer (MSI)
-      working-directory: build
-      run: cpack -G WIX -C Release
     - name: Build MAX
       run: |
         cmake --build build --config Release --target MAX
@@ -45,3 +36,12 @@ jobs:
     - name: Create Installer (MSI)
       working-directory: build
       run: cpack -G WIX -C Release
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: MAX-Antivirus-Setup
+        path: |
+          build/*.msi
+          build/Release/MAX.exe
+          ui_mockup.html
