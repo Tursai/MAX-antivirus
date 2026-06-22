@@ -11,14 +11,15 @@ jobs:
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target MAX
-      - name: Create Package
+      - name: Bundle
         run: |
           mkdir dist
           cp build/Release/MAX.exe dist/
           cp build/_deps/webview2-src/build/native/x64/WebView2Loader.dll dist/
           cp ui_mockup.html dist/
-      - name: Download MAX
+      - name: Download Result
         uses: actions/upload-artifact@v4
         with:
-          name: MAX_Antivirus_STANDALONE
+          name: MAX-Antivirus-Final
           path: dist/*
+
