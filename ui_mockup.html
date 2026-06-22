@@ -1,62 +1,33 @@
-#include <windows.h>
-#include <string>
-#include <wrl.h>
-#include <shlwapi.h>
-#include "WebView2.h"
-
-#pragma comment(lib, "shlwapi.lib")
-
-using namespace Microsoft::WRL;
-
-HWND hWnd;
-ComPtr<ICoreWebView2Controller> webviewController;
-
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    if (message == WM_SIZE && webviewController != nullptr) {
-        RECT bounds; GetClientRect(hWnd, &bounds);
-        webviewController->put_Bounds(bounds);
-    }
-    if (message == WM_DESTROY) PostQuitMessage(0);
-    return DefWindowProc(hWnd, message, wParam, lParam);
-}
-
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
-    WNDCLASSW wc = {0};
-    wc.lpfnWndProc = WndProc;
-    wc.hInstance = hInst;
-    wc.lpszClassName = L"MAX_ANTIVIRUS_UI";
-    RegisterClassW(&wc);
-
-    hWnd = CreateWindowExW(0, L"MAX_ANTIVIRUS_UI", L"MAX Antivirus", 
-        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1200, 800, 0, 0, hInst, 0);
-    ShowWindow(hWnd, nShow);
-
-    CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
-        Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([](HRESULT res, ICoreWebView2Environment* env) -> HRESULT {
-            env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>([](HRESULT res, ICoreWebView2Controller* ctrl) -> HRESULT {
-                webviewController = ctrl;
-                ComPtr<ICoreWebView2> webview;
-                ctrl->get_CoreWebView2(&webview);
-                
-                // Улучшенный поиск пути к HTML
-                WCHAR szPath[MAX_PATH];
-                GetModuleFileNameW(NULL, szPath, MAX_PATH);
-                PathRemoveFileSpecW(szPath);
-                PathAppendW(szPath, L"ui_mockup.html");
-                
-                std::wstring htmlPath = L"file:///";
-                htmlPath += szPath;
-                
-                // Заменяем \ на / для правильной работы ссылки
-                for (auto& c : htmlPath) if (c == L'\\') c = L'/';
-
-                webview->Navigate(htmlPath.c_str());
-                return S_OK;
-            }).Get());
-            return S_OK;
-        }).Get());
-
-    MSG msg;
-    while (GetMessage(&msg, 0, 0, 0)) { DispatchMessage(&msg); }
-    return 0;
-}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MAX Antivirus</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-color: #0b0f19; --sidebar-color: #111827; --accent-color: #3b82f6; --success-color: #10b981; --text-primary: #f9fafb; }
+        body { background-color: var(--bg-color); color: var(--text-primary); display: flex; height: 100vh; margin: 0; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        .sidebar { width: 240px; background-color: var(--sidebar-color); border-right: 1px solid #374151; padding: 20px; }
+        .logo { font-size: 24px; font-weight: 900; color: var(--accent-color); margin-bottom: 40px; }
+        .main { flex: 1; padding: 40px; position: relative; }
+        .hero { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 60px; border-radius: 30px; border: 1px solid #334155; position: relative; overflow: hidden; }
+        .mascot-container { position: absolute; right: 0; top: 0; width: 500px; height: 100%; opacity: 0.8; }
+        .robot-img { width: 100%; height: 100%; background-image: url('https://img.freepik.com/free-photo/view-futuristic-robot-cyborg_23-2150641525.jpg'); background-size: cover; mask-image: linear-gradient(to left, black 40%, transparent); }
+        .btn-main { background: var(--accent-color); color: white; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">MAX.</div>
+        <div style="color: #9ca3af;">Дашборд</div>
+    </div>
+    <div class="main">
+        <div class="hero">
+            <h1>MAX Antivirus</h1>
+            <p>Система под защитой интеллектуального робота.</p>
+            <button class="btn-main">БЫСТРОЕ СКАННЕРОВАНИЕ</button>
+            <div class="mascot-container"><div class="robot-img"></div></div>
+        </div>
+    </div>
+</body>
+</html>
