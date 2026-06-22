@@ -6,30 +6,23 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Configure and Build
+      - name: Install WebView2 SDK
         run: |
-          cmake -B build -S . `
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
-          -DVCPKG_TARGET_TRIPLET=x64-windows `
-          -DX_VCPKG_APPLOCAL_DEPS_INSTALL=ON `
-          -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release --target MAX
-          cmake --build build --config Release --target MAX_Guard
+          nuget install Microsoft.Web.WebView2 -Version 1.0.1264.42 -OutputDirectory build/sdk
 
-      - name: Upload Artifacts
+      - name: Build EXE
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release --target MAX
+
+      - name: Upload Final EXE
         uses: actions/upload-artifact@v4
         with:
-          name: MAX-Antivirus-Package
+          name: MAX-Antivirus-Final-EXE
           path: |
             build/bin/Release/MAX.exe
-            build/bin/Release/*.dll
             ui_mockup.html
