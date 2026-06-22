@@ -1,0 +1,55 @@
+name: Build MAX Antivirus
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -S . `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x64-windows `
+          -DX_VCPKG_APPLOCAL_DEPS_INSTALL=ON `
+          -DENABLE_EXAMPLES=OFF `
+          -DENABLE_APP=OFF `
+          -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build All
+      run: |
+        cmake --build build --config Release
+
+    - name: Create Bundle Folder
+      shell: pwsh
+      run: |
+        mkdir dist
+        cp build/bin/Release/*.exe dist/
+        cp build/bin/Release/*.dll dist/
+        cp ui_mockup.html dist/
+        # Дополнительно проверим наличие DLL в папке сборки
+        Get-ChildItem -Path build -Filter *.dll -Recurse | Copy-Item -Destination dist/ -Force
+
+    - name: Create Package (MSI & ZIP)
+      working-directory: build
+      run: |
+        cpack -G WIX -C Release
+        cpack -G ZIP -C Release
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: MAX-Antivirus-Complete
+        path: |
+          dist/*
+          build/*.msi
+          build/*.zip
