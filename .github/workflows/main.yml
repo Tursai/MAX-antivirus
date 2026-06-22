@@ -11,15 +11,17 @@ jobs:
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target MAX
-      - name: Bundle
+      - name: Create Installer
         run: |
-          mkdir dist
-          cp build/Release/MAX.exe dist/
-          cp build/_deps/webview2-src/build/native/x64/WebView2Loader.dll dist/
-          cp ui_mockup.html dist/
-          cp mascot.png dist/ || echo "No mascot"
-      - name: Download
+          mkdir release_pkg
+          cp build/Release/MAX.exe release_pkg/
+          cp ui_mockup.html release_pkg/
+          # Эта команда создает сам файл установки .msi
+          cpack --config build/CPackConfig.cmake -G WIX
+      - name: Get Files
         uses: actions/upload-artifact@v4
         with:
-          name: MAX-Antivirus-Final
-          path: dist/*
+          name: MAX_Antivirus_INSTALLER
+          path: |
+            build/*.msi
+            release_pkg/*
