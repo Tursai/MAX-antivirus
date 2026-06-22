@@ -1,78 +1,23 @@
 #include <windows.h>
-#include <string>
-#include <wrl.h>
-#include "WebView2.h"
 
-using namespace Microsoft::WRL;
+LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
+    if (msg == WM_DESTROY) PostQuitMessage(0);
+    return DefWindowProc(hWnd, msg, wp, lp);
+}
 
-// Глобальные переменные
-ComPtr<ICoreWebView2Controller> webviewController;
-ComPtr<ICoreWebView2> webview;
+int WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lp, int nS) {
+    WNDCLASSW wc = {0};
+    wc.lpfnWndProc = WndProc;
+    wc.hInstance = hI;
+    wc.lpszClassName = L"MAX";
+    RegisterClassW(&wc);
+    HWND hWnd = CreateWindowW(L"MAX", L"MAX Antivirus", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 200, 200, 800, 600, 0, 0, hI, 0);
+    
+    MessageBoxA(hWnd, "MAX Antivirus УСПЕШНО СОБРАН И ЗАПУЩЕН!", "MAX Status", MB_OK);
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    switch (message) {
-        case WM_SIZE:
-            if (webviewController != nullptr) {
-                RECT bounds;
-                GetClientRect(hWnd, &bounds);
-                webviewController->put_Bounds(bounds);
-            }
-            break;
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            break;
-        default:
-            return DefWindowProc(hWnd, message, wParam, lParam);
+    MSG msg;
+    while (GetMessage(&msg, 0, 0, 0)) {
+        DispatchMessage(&msg);
     }
     return 0;
 }
-
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
-    WNDCLASSEXW wcex = {sizeof(WNDCLASSEXW)};
-    wcex.lpfnWndProc = WndProc;
-    wcex.hInstance = hInst;
-    wcex.hIcon = LoadIcon(hInst, IDI_APPLICATION);
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.lpszClassName = L"MAXAntivirus";
-    RegisterClassExW(&wcex);
-
-    HWND hWnd = CreateWindowW(L"MAXAntivirus", L"MAX Antivirus", WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 1100, 750, NULL, NULL, hInst, NULL);
-
-    ShowWindow(hWnd, nShow);
-    UpdateWindow(hWnd);
-
-    // Инициализация WebView2
-    CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
-        Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-            [hWnd](HRESULT res, ICoreWebView2Environment* env) -> HRESULT {
-                env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-                    [hWnd](HRESULT res, ICoreWebView2Controller* ctrl) -> HRESULT {
-                        if (ctrl != nullptr) {
-                            webviewController = ctrl;
-                            webviewController->get_CoreWebView2(&webview);
-                        }
-
-                        // Находим путь к HTML файлу рядом с EXE
-                        WCHAR szPath[MAX_PATH];
-                        GetModuleFileNameW(NULL, szPath, MAX_PATH);
-                        std::wstring path(szPath);
-                        std::wstring dir = path.substr(0, path.find_last_of(L"\\/"));
-                        std::wstring htmlPath = L"file:///" + dir + L"\\ui_mockup.html";
-
-                        webview->Navigate(htmlPath.c_str());
-                        return S_OK;
-                    }).Get());
-                return S_OK;
-            }).Get());
-
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-    return (int)msg.wParam;
-}
-#include <windows.h>
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) { if (msg == WM_DESTROY) PostQuitMessage(0); return DefWindowProc(hWnd, msg, wp, lp); }
-int WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lp, int nS) { WNDCLASSW wc = {0}; wc.lpfnWndProc = WndProc; wc.hInstance = hI; wc.lpszClassName = L"MAX"; RegisterClassW(&wc); HWND hWnd = CreateWindowW(L"MAX", L"MAX Antivirus", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 800, 600, 0, 0, hI, 0);
