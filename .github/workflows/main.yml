@@ -7,19 +7,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
-      - name: Build
+      - name: Build EXE
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target MAX
-      - name: Bundle
-        run: |
-          mkdir dist
-          cp build/Release/MAX.exe dist/
-          cp build/_deps/webview2-src/build/native/x64/WebView2Loader.dll dist/
-          cp ui_mockup.html dist/
-      - name: Download Result
+      - name: Upload Final Version
         uses: actions/upload-artifact@v4
         with:
-          name: MAX-Antivirus-Final
-          path: dist/*
-
+          name: MAX_Antivirus_Ready
+          path: |
+            build/Release/MAX.exe
+            build/_deps/webview2-src/build/native/x64/WebView2Loader.dll
