@@ -1,23 +1,26 @@
 #include <windows.h>
+#include <string>
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
-    if (msg == WM_DESTROY) PostQuitMessage(0);
-    return DefWindowProc(hWnd, msg, wp, lp);
-}
+// Простая функция для запуска интерфейса
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
+    // Получаем путь к нашему HTML файлу
+    WCHAR szPath[MAX_PATH];
+    GetModuleFileNameW(NULL, szPath, MAX_PATH);
+    std::wstring path(szPath);
+    std::wstring dir = path.substr(0, path.find_last_of(L"\\/"));
+    std::wstring htmlPath = dir + L"\\ui_mockup.html";
 
-int WINAPI WinMain(HINSTANCE hI, HINSTANCE hP, LPSTR lp, int nS) {
-    WNDCLASSW wc = {0};
-    wc.lpfnWndProc = WndProc;
-    wc.hInstance = hI;
-    wc.lpszClassName = L"MAX";
-    RegisterClassW(&wc);
-    HWND hWnd = CreateWindowW(L"MAX", L"MAX Antivirus", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 200, 200, 800, 600, 0, 0, hI, 0);
+    // Запускаем наш интерфейс через системный браузер в режиме окна
+    std::wstring command = L"msedge --app=\"file:///" + htmlPath + L"\"";
     
-    MessageBoxA(hWnd, "MAX Antivirus УСПЕШНО СОБРАН И ЗАПУЩЕН!", "MAX Status", MB_OK);
-
-    MSG msg;
-    while (GetMessage(&msg, 0, 0, 0)) {
-        DispatchMessage(&msg);
+    STARTUPINFOW si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+    if (CreateProcessW(NULL, (LPWSTR)command.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    } else {
+        MessageBoxA(NULL, "Ошибка: Не удалось загрузить интерфейс робота!", "MAX Error", MB_OK);
     }
+
     return 0;
 }
