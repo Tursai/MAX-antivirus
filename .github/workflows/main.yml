@@ -1,29 +1,24 @@
 name: Build MAX Antivirus
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
-
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Build MAX
+      - name: Build
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target MAX
-
-      - name: Upload Artifacts
+      - name: Prepare Files
+        run: |
+          mkdir release_pkg
+          cp build/Release/MAX.exe release_pkg/
+          cp ui_mockup.html release_pkg/
+          cp mascot.png release_pkg/ || echo "No mascot"
+      - name: Get Antivirus
         uses: actions/upload-artifact@v4
         with:
-          name: MAX-Antivirus-EXE
-          path: |
-            build/Release/MAX.exe
-            ui_mockup.html
+          name: MAX_Antivirus_Full_v1.5
+          path: release_pkg/*
