@@ -1,0 +1,15 @@
+{
+    "name": "max-antivirus",
+    "version": "1.1.0",
+    "dependencies": [
+        "openssl",
+        "zlib",
+        "bzip2",
+        "json-c",
+        "pcre2",
+        "libxml2",
+        "curl",
+        "check",
+        "pdcurses"
+    ]
+}
