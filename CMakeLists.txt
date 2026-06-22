@@ -9,7 +9,7 @@ FetchContent_Declare(webview2 URL https://www.nuget.org/api/v2/package/Microsoft
 FetchContent_MakeAvailable(webview2)
 
 add_executable(MAX WIN32 max_gui.cpp max.rc)
-# Добавили библиотеку Shlwapi для работы с путями
+
 target_link_libraries(MAX PRIVATE shlwapi)
 target_include_directories(MAX PRIVATE "${webview2_SOURCE_DIR}/build/native/include")
 target_link_libraries(MAX PRIVATE "${webview2_SOURCE_DIR}/build/native/x64/WebView2Loader.dll.lib")
