@@ -264,6 +264,12 @@
                 <p>Синхронизация с сервером активна. Отчеты отправляются в консоль управления.</p>
                 <div style="margin-top: 10px; font-size: 12px; color: var(--accent-color);">IP: 192.168.1.100 (Connected)</div>
             </div>
+            <div class="card">
+                <i class="fas fa-folder-minus"></i>
+                <h3>Исключения</h3>
+                <p>Добавьте файлы или папки, которые MAX не должен проверять.</p>
+                <button class="btn-main" style="margin-top: 15px; padding: 10px 20px; font-size: 12px; background: #64748b;" onclick="addExclusion()">ДОБАВИТЬ ПУТЬ</button>
+            </div>
             <div class="card" id="updateCard">
                 <i class="fas fa-sync-alt" id="updateIcon"></i>
                 <h3>Обновление баз</h3>
@@ -281,6 +287,16 @@
     </div>
 
     <script>
+        function addExclusion() {
+            const path = prompt("Введите путь к файлу или папке для исключения:");
+            if (path) {
+                alert("Путь успешно добавлен в белый список MAX:\n" + path);
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage('add_exclusion:' + path);
+                }
+            }
+        }
+
         function updateSignatures() {
             const status = document.getElementById('updateStatus');
             const icon = document.getElementById('updateIcon');
