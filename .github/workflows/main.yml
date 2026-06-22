@@ -29,20 +29,11 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release `
           -DCPACK_PACKAGE_NAME="MAX Antivirus"
 
-    - name: Build MAX
+     - name: Build MAX
       run: |
-        cmake --build build --config Release --target MAX
-        cmake --build build --config Release --target MAX_Guard
+        cmake --build build --config Release --target MAX_TARGET
+        cmake --build build --config Release --target MAX_GUARD_TARGET
 
     - name: Create Installer (MSI)
       working-directory: build
-      run: cpack -G WIX
-
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: MAX-Antivirus-Setup
-        path: |
-          build/*.msi
-          build/bin/Release/MAX.exe
-          ui_mockup.html
+      run: cpack -G WIX -C Release
