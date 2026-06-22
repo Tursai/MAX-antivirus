@@ -1,8 +1,5 @@
 #include <windows.h>
 
-// Иконка приложения (используем существующую или подставьте свою)
-IDI_ICON1               ICON                    "win32/res/clam.ico"
-
 // Версия файла для свойств .exe
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,0,0,1
