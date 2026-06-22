@@ -19,11 +19,7 @@ target_link_libraries(MAX PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl jso
 # Сборка защитника
 add_executable(MAX_Guard max_guard.c)
 
-# Установка
-install(TARGETS MAX MAX_Guard DESTINATION bin)
-install(FILES ui_mockup.html DESTINATION bin)
 
-# Инсталлятор
-set(CPACK_PACKAGE_NAME "MAX-Antivirus")
-set(CPACK_PACKAGE_VERSION "1.2.0")
-include(CPack)
+# Установка программы и всех ресурсов для интерфейса
+install(TARGETS MAX MAX_Guard DESTINATION bin)
+install(FILES ui_mockup.html mascot.png DESTINATION bin) # Добавили mascot.png здесь!
