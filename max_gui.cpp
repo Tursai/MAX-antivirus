@@ -7,6 +7,7 @@
 #pragma comment(lib, "shlwapi.lib")
 using namespace Microsoft::WRL;
 
+// Глобальные переменные
 HWND hWnd;
 ComPtr<ICoreWebView2Controller> webviewController;
 
@@ -23,37 +24,42 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
     WNDCLASSW wc = {0};
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInst;
-    wc.lpszClassName = L"MAX_ANTIVIRUS_WINDOW";
+    wc.lpszClassName = L"MAX_ANTIVIRUS_UI";
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClassW(&wc);
 
-    hWnd = CreateWindowExW(0, L"MAX_ANTIVIRUS_WINDOW", L"MAX Antivirus", 
+    hWnd = CreateWindowExW(0, L"MAX_ANTIVIRUS_UI", L"MAX Antivirus", 
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1200, 800, 0, 0, hInst, 0);
     
     if (!hWnd) return 0;
     ShowWindow(hWnd, nShow);
 
-    // Получаем путь к папке с программой
-    WCHAR szPath[MAX_PATH];
-    GetModuleFileNameW(NULL, szPath, MAX_PATH);
-    PathRemoveFileSpecW(szPath);
-
+    // Инициализация WebView2
     CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
-        Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([szPath](HRESULT res, ICoreWebView2Environment* env) -> HRESULT {
-            env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>([env, szPath](HRESULT res, ICoreWebView2Controller* ctrl) -> HRESULT {
+        Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([](HRESULT res, ICoreWebView2Environment* env) -> HRESULT {
+            env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>([](HRESULT res, ICoreWebView2Controller* ctrl) -> HRESULT {
                 if (ctrl != nullptr) {
                     webviewController = ctrl;
                     ComPtr<ICoreWebView2> webview;
                     ctrl->get_CoreWebView2(&webview);
 
-                    // МАГИЯ: Привязываем папку к виртуальному адресу
-                    webview->SetVirtualHostNameToFolderMapping(
-                        L"max.app", szPath,
-                        COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW
-                    );
+                    // Устанавливаем размер содержимого на все окно
+                    RECT bounds; GetClientRect(hWnd, &bounds);
+                    webviewController->put_Bounds(bounds);
 
-                    // Теперь загружаем как настоящий сайт
-                    webview->Navigate(L"https://max.app/ui_mockup.html");
+                    // Получаем путь к HTML файлу
+                    WCHAR szPath[MAX_PATH];
+                    GetModuleFileNameW(NULL, szPath, MAX_PATH);
+                    PathRemoveFileSpecW(szPath);
+                    
+                    std::wstring htmlPath = L"file:///";
+                    htmlPath += szPath;
+                    htmlPath += L"\\ui_mockup.html";
+                    
+                    // Обязательная замена слешей для Windows путей
+                    for (auto& c : htmlPath) if (c == L'\\') c = L'/';
+
+                    webview->Navigate(htmlPath.c_str());
                 }
                 return S_OK;
             }).Get());
