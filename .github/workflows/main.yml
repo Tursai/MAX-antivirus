@@ -1,29 +1,24 @@
 name: Build MAX Antivirus
 on: [push, workflow_dispatch]
-
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup MSVC (Компилятор Windows)
+      - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Configure and Build (Сборка EXE)
+      - name: Build
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target MAX
-
-      - name: Create Installer (Создание MSI)
-        working-directory: build
-        run: cpack -G WIX -C Release
-
-      - name: Upload Results (Загрузка файлов)
+      - name: Create Package
+        run: |
+          mkdir dist
+          cp build/Release/MAX.exe dist/
+          cp build/_deps/webview2-src/build/native/x64/WebView2Loader.dll dist/
+          cp ui_mockup.html dist/
+      - name: Download MAX
         uses: actions/upload-artifact@v4
         with:
-          name: MAX_Antivirus_INSTALLER
-          path: |
-            build/*.msi
-            build/Release/MAX.exe
-            ui_mockup.html
+          name: MAX_Antivirus_STANDALONE
+          path: dist/*
