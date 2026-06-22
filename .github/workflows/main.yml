@@ -11,14 +11,14 @@ jobs:
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target MAX
-      - name: Prepare Folder
+      - name: Create Package
         run: |
-          mkdir MAX_Antivirus
-          cp build/Release/MAX.exe MAX_Antivirus/
-          cp ui_mockup.html MAX_Antivirus/
-          cp mascot.png MAX_Antivirus/ || echo "No mascot yet"
-      - name: Download Link
+          mkdir release_dist
+          cp build/Release/MAX.exe release_dist/
+          cp build/_deps/webview2-src/build/native/x64/WebView2Loader.dll release_dist/
+          cp ui_mockup.html release_dist/
+      - name: Download MAX
         uses: actions/upload-artifact@v4
         with:
-          name: MAX_Antivirus_READY
-          path: MAX_Antivirus/*
+          name: MAX-Antivirus-Standalone
+          path: release_dist/*
