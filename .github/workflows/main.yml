@@ -11,14 +11,14 @@ jobs:
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target MAX
-      - name: Prepare Files
+      - name: Prepare Folder
         run: |
-          mkdir release_pkg
-          cp build/Release/MAX.exe release_pkg/
-          cp ui_mockup.html release_pkg/
-          cp mascot.png release_pkg/ || echo "No mascot"
-      - name: Get Antivirus
+          mkdir MAX_Antivirus
+          cp build/Release/MAX.exe MAX_Antivirus/
+          cp ui_mockup.html MAX_Antivirus/
+          cp mascot.png MAX_Antivirus/ || echo "No mascot yet"
+      - name: Download Link
         uses: actions/upload-artifact@v4
         with:
-          name: MAX_Antivirus_Full_v1.5
-          path: release_pkg/*
+          name: MAX_Antivirus_READY
+          path: MAX_Antivirus/*
