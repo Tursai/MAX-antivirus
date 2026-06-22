@@ -1,27 +1,29 @@
 name: Build MAX Antivirus
 on: [push, workflow_dispatch]
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup MSVC
+
+      - name: Setup MSVC (Компилятор Windows)
         uses: ilammy/msvc-dev-cmd@v1
-      - name: Build
+
+      - name: Configure and Build (Сборка EXE)
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release --target MAX
-      - name: Create Installer
-        run: |
-          mkdir release_pkg
-          cp build/Release/MAX.exe release_pkg/
-          cp ui_mockup.html release_pkg/
-          # Эта команда создает сам файл установки .msi
-          cpack --config build/CPackConfig.cmake -G WIX
-      - name: Get Files
+
+      - name: Create Installer (Создание MSI)
+        working-directory: build
+        run: cpack -G WIX -C Release
+
+      - name: Upload Results (Загрузка файлов)
         uses: actions/upload-artifact@v4
         with:
           name: MAX_Antivirus_INSTALLER
           path: |
             build/*.msi
-            release_pkg/*
+            build/Release/MAX.exe
+            ui_mockup.html
