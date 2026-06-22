@@ -1,13 +1,15 @@
 #include <windows.h>
 #include <string>
-#include "WebView2.h"
-#include <wil/com.h>
 #include <wrl.h>
+#include "WebView2.h"
 
 using namespace Microsoft::WRL;
 
+// Глобальные переменные
+ComPtr<ICoreWebView2Controller> webviewController;
+ComPtr<ICoreWebView2> webview;
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    static wil::com_ptr<ICoreWebView2Controller> webviewController;
     switch (message) {
         case WM_SIZE:
             if (webviewController != nullptr) {
@@ -40,19 +42,25 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
     ShowWindow(hWnd, nShow);
     UpdateWindow(hWnd);
 
+    // Инициализация WebView2
     CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
             [hWnd](HRESULT res, ICoreWebView2Environment* env) -> HRESULT {
                 env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
                     [hWnd](HRESULT res, ICoreWebView2Controller* ctrl) -> HRESULT {
-                        wil::com_ptr<ICoreWebView2> webview;
-                        ctrl->get_CoreWebView2(&webview);
-                        
+                        if (ctrl != nullptr) {
+                            webviewController = ctrl;
+                            webviewController->get_CoreWebView2(&webview);
+                        }
+
+                        // Находим путь к HTML файлу рядом с EXE
                         WCHAR szPath[MAX_PATH];
                         GetModuleFileNameW(NULL, szPath, MAX_PATH);
-                        std::wstring htmlPath = std::wstring(szPath).substr(0, std::wstring(szPath).find_last_of(L"\\/")) + L"\\ui_mockup.html";
-                        
-                        webview->Navigate((L"file:///" + htmlPath).c_str());
+                        std::wstring path(szPath);
+                        std::wstring dir = path.substr(0, path.find_last_of(L"\\/"));
+                        std::wstring htmlPath = L"file:///" + dir + L"\\ui_mockup.html";
+
+                        webview->Navigate(htmlPath.c_str());
                         return S_OK;
                     }).Get());
                 return S_OK;
