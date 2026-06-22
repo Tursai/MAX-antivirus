@@ -37,3 +37,11 @@ jobs:
     - name: Create Installer (MSI)
       working-directory: build
       run: cpack -G WIX -C Release
+    - name: Build MAX
+      run: |
+        cmake --build build --config Release --target MAX
+        cmake --build build --config Release --target MAX_Guard
+
+    - name: Create Installer (MSI)
+      working-directory: build
+      run: cpack -G WIX -C Release
