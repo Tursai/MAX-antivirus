@@ -1,35 +1,64 @@
 #include <windows.h>
 #include <string>
+#include <wrl.h>
+#include "WebView2.h"
+
+using namespace Microsoft::WRL;
+
+// Глобальные переменные
+HWND hWnd;
+ComPtr<ICoreWebView2Controller> webviewController;
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == WM_SIZE && webviewController != nullptr) {
+        RECT bounds; GetClientRect(hWnd, &bounds);
+        webviewController->put_Bounds(bounds);
+    }
+    if (message == WM_DESTROY) PostQuitMessage(0);
+    return DefWindowProc(hWnd, message, wParam, lParam);
+}
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
-    // 1. Get current folder path
-    WCHAR szPath[MAX_PATH];
-    GetModuleFileNameW(NULL, szPath, MAX_PATH);
-    std::wstring path(szPath);
-    size_t pos = path.find_last_of(L"\\/");
-    std::wstring dir = (pos != std::string::npos) ? path.substr(0, pos) : L".";
-    
-    // 2. Path to the UI file
-    std::wstring htmlPath = dir + L"\\ui_mockup.html";
+    // 1. Создаем класс окна
+    WNDCLASSW wc = {0};
+    wc.lpfnWndProc = WndProc;
+    wc.hInstance = hInst;
+    wc.lpszClassName = L"MAX_ANTIVIRUS_WINDOW";
+    wc.hIcon = LoadIcon(hInst, IDI_APPLICATION);
+    RegisterClassW(&wc);
 
-    // 3. Check if file exists
-    if (GetFileAttributesW(htmlPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
-        MessageBoxA(NULL, "ERROR: ui_mockup.html not found!\nPlease extract ALL files from ZIP to the same folder and try again.", "MAX Antivirus", MB_OK | MB_ICONERROR);
-        return 1;
-    }
+    // 2. Создаем само окно
+    hWnd = CreateWindowExW(0, L"MAX_ANTIVIRUS_WINDOW", L"MAX Antivirus", 
+        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1200, 800, 0, 0, hInst, 0);
+    
+    ShowWindow(hWnd, nShow);
+    UpdateWindow(hWnd);
 
-    // 4. Run UI in App Mode (No address bar, looks like real program)
-    std::wstring command = L"msedge.exe --app=\"file:///" + htmlPath + L"\"";
-    
-    STARTUPINFOW si = { sizeof(si) };
-    PROCESS_INFORMATION pi;
-    if (!CreateProcessW(NULL, (LPWSTR)command.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-        // Fallback: try opening with default browser if Edge App mode fails
-        ShellExecuteW(NULL, L"open", htmlPath.c_str(), NULL, NULL, SW_SHOWNORMAL);
-    } else {
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
+    // 3. Запускаем встроенный движок WebView2
+    CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr,
+        Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([](HRESULT res, ICoreWebView2Environment* env) -> HRESULT {
+            env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>([](HRESULT res, ICoreWebView2Controller* ctrl) -> HRESULT {
+                if (ctrl != nullptr) {
+                    webviewController = ctrl;
+                    ComPtr<ICoreWebView2> webview;
+                    ctrl->get_CoreWebView2(&webview);
+                    
+                    // Загружаем интерфейс из папки с программой
+                    WCHAR szPath[MAX_PATH]; GetModuleFileNameW(NULL, szPath, MAX_PATH);
+                    std::wstring path(szPath);
+                    std::wstring htmlPath = L"file:///" + path.substr(0, path.find_last_of(L"\\/")) + L"\\ui_mockup.html";
+                    webview->Navigate(htmlPath.c_str());
+                }
+                return S_OK;
+            }).Get());
+            return S_OK;
+        }).Get());
+
+    // 4. Цикл работы программы
+    MSG msg;
+    while (GetMessage(&msg, 0, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
-    
     return 0;
 }
