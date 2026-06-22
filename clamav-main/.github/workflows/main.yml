@@ -1,0 +1,29 @@
+name: Build MAX Antivirus
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Configure and Build
+        run: |
+          cmake -B build -S . `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x64-windows `
+          -DX_VCPKG_APPLOCAL_DEPS_INSTALL=ON `
+          -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release --target MAX
+          cmake --build build --config Release --target MAX_Guard
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: MAX-Antivirus-Complete
+          path: |
+            build/bin/Release/MAX.exe
+            build/bin/Release/*.dll
+            ui_mockup.html
